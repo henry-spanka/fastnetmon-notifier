@@ -1,0 +1,27 @@
+#!/usr/bin/perl
+
+use strict;
+use warnings;
+
+use FindBin;
+use lib $FindBin::Bin;
+
+use Notifier::Helper;
+use Notifier::Handle;
+
+use Data::Dumper;
+
+my $params = {
+    ip_address => $ARGV[0],
+    'direction' => $ARGV[1],
+    'pps' => $ARGV[2],
+    'action' => $ARGV[3]
+};
+
+my $config = Notifier::Helper::getConfig();
+
+Notifier::Helper::checkParams($params);
+
+my $handler = Notifier::Handle->new($params, $config);
+
+$handler->handle();
