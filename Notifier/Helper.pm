@@ -7,6 +7,7 @@ use Data::Validate::IP qw(is_ipv4);
 use YAML::XS 'LoadFile';
 use POSIX qw(strftime);
 
+
 my $FASTNETMON_PARAMS = {
     'Attack_type' => 1,
     'Attack_protocol' => 1,
@@ -52,7 +53,9 @@ sub argumentFail {
 }
 
 sub getConfig {
-    return LoadFile('config.yaml');
+    my $path = shift;
+
+    return LoadFile("${path}/config.yaml");
 }
 
 sub parseSubject {
@@ -92,6 +95,7 @@ sub getCurrentTimeForAnnotation {
 
 sub parseFastNetMonData {
     my $params = shift;
+    my $path = shift;
 
     my $data = {};
     my $raw;
@@ -101,7 +105,7 @@ sub parseFastNetMonData {
     my $key;
     my $value;
 
-    my $filename = "../cache/$params->{ip_address}.data";
+    my $filename = "${path}/cache/$params->{ip_address}.data";
 
     if (-f $filename && $params->{action} eq 'unban') {
         open (VFILE, $filename);
@@ -163,8 +167,9 @@ sub parseVoxilityList {
 
 sub getOldVoxilityStatus {
     my $ip = shift;
+    my $path = shift;
 
-    my $filename = "../cache/${ip}.cache";
+    my $filename = "${path}/cache/${ip}.cache";
 
     return { exists => 0 } if (! -f $filename);
 
@@ -181,8 +186,9 @@ sub getOldVoxilityStatus {
 sub writeOldVoxilityStatus {
     my $ip = shift;
     my $status = shift;
+    my $path = shift;
 
-    my $filename = "../cache/${ip}.cache";
+    my $filename = "${path}/cache/${ip}.cache";
 
     open (VFILE, ">${filename}");
     print VFILE "OLDSTATUS:${status}";
@@ -191,8 +197,9 @@ sub writeOldVoxilityStatus {
 
 sub deleteOldVoxilityStatus {
     my $ip = shift;
+    my $path = shift;
 
-    unlink "../cache/${ip}.cache";
+    unlink "${path}/cache/${ip}.cache";
 }
 
 1;

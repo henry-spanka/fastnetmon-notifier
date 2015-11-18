@@ -11,15 +11,16 @@ use LWP::UserAgent;
 use JSON;
 
 sub new {
-    my ($class, $params, $config) = @_;
+    my ($class, $params, $config, $path) = @_;
 
-    my $details = Notifier::Helper::parseFastNetMonData($params);
+    my $details = Notifier::Helper::parseFastNetMonData($params, $path);
 
     return bless {
         params => $params,
         config => $config,
         tasks => [],
-        details => $details
+        details => $details,
+        path => $path
     }, $class;
 }
 
@@ -199,7 +200,7 @@ sub mitigateVoxility {
 
     my $status = Notifier::Helper::parseVoxilityList($response->content, $ip_address);
 
-    Notifier::Helper::writeOldVoxilityStatus($ip_address, $status->{protected});
+    Notifier::Helper::writeOldVoxilityStatus($ip_address, $status->{protected}, $self->{path});
 
     if ($status->{status} eq 1) {
         if ($status->{protected}) {
@@ -256,7 +257,7 @@ sub revertMitigationVoxility {
 
     my $server_endpoint = "https://$vconfig->{host}/$vconfig->{path}";
 
-    my $oldstatus = Notifier::Helper::getOldVoxilityStatus($ip_address);
+    my $oldstatus = Notifier::Helper::getOldVoxilityStatus($ip_address, $self->{path});
 
     if (!$oldstatus->{exists}) {
         $self->addTask("Protection is in old state - Nothing to do");
@@ -308,7 +309,7 @@ sub revertMitigationVoxility {
         $self->addTask("Error while trying to change protection back to old state ($oldstatus->{status})");
     }
 
-    Notifier::Helper::deleteOldVoxilityStatus($ip_address);
+    Notifier::Helper::deleteOldVoxilityStatus($ip_address, $self->{path});
 
 }
 

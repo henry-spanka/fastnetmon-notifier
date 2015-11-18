@@ -9,6 +9,8 @@ use lib $FindBin::Bin;
 use Notifier::Helper;
 use Notifier::Handle;
 
+use File::Basename;
+
 use Data::Dumper;
 
 my $params = {
@@ -18,10 +20,12 @@ my $params = {
     'action' => $ARGV[3]
 };
 
-my $config = Notifier::Helper::getConfig();
+my $path = dirname(__FILE__);
+
+my $config = Notifier::Helper::getConfig($path);
 
 Notifier::Helper::checkParams($params);
 
-my $handler = Notifier::Handle->new($params, $config);
+my $handler = Notifier::Handle->new($params, $config, $path);
 
 $handler->handle();
