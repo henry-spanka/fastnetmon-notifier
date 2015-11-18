@@ -13,7 +13,7 @@ use JSON;
 sub new {
     my ($class, $params, $config) = @_;
 
-    my $details = Notifier::Helper::parseFastNetMonData();
+    my $details = Notifier::Helper::parseFastNetMonData($params);
 
     return bless {
         params => $params,

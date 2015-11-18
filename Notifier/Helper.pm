@@ -91,6 +91,7 @@ sub getCurrentTimeForAnnotation {
 }
 
 sub parseFastNetMonData {
+    my $params = shift;
 
     my $data = {};
     my $raw;
@@ -99,6 +100,33 @@ sub parseFastNetMonData {
 
     my $key;
     my $value;
+
+    my $filename = "../cache/$params->{ip_address}.data";
+
+    if (-f $filename && $params->{action} eq 'unban') {
+        open (VFILE, $filename);
+        while (<VFILE>) {
+            chomp;
+
+            $line = $_;
+
+            if ($line =~ /^([A-Za-z0-9_.\s]+):\s([A-Za-z0-9_.\s]+)$/) {
+                $key = $1;
+                $value = $2;
+                $key =~ s/\s+/_/g;
+                chomp $key;
+
+                if (defined($FASTNETMON_PARAMS->{$key})) {
+                    $data->{$key} = $value;
+                }
+            }
+            $raw .= "${line}\n";
+        }
+        close (VFILE);
+        return { data => $data, raw => $raw };
+    }
+
+    open (VFILE, ">${filename}");
 
     foreach $line ( <STDIN> ) {
         chomp($line);
@@ -114,8 +142,10 @@ sub parseFastNetMonData {
             }
         }
         $raw .= "${line}\n";
+        print VFILE "${line}\n";
 
     }
+    close (VFILE);
 
     return { data => $data, raw => $raw };
 }
