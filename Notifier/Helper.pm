@@ -52,7 +52,7 @@ sub argumentFail {
 }
 
 sub getConfig {
-    return LoadFile('../config.yaml');
+    return LoadFile('config.yaml');
 }
 
 sub parseSubject {
