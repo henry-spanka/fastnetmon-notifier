@@ -31,7 +31,7 @@ sub handle {
     if ($self->{params}->{action} eq 'ban') {
         $self->addTask("Received incident report");
 
-        if ($self->{config}->{mitigation}->{voxility}->{enable}) {
+        if ($self->{config}->{mitigation}->{voxility}->{enable} && $self->{params}->{direction} eq 'incoming') {
             $self->mitigateVoxility($self->{config}->{mitigation}->{voxility});
         }
 
@@ -50,7 +50,7 @@ sub handle {
     } else {
         $self->addTask("Received unblock request");
 
-        if ($self->{config}->{mitigation}->{voxility}->{enable}) {
+        if ($self->{config}->{mitigation}->{voxility}->{enable} && $self->{params}->{direction} eq 'incoming') {
             $self->revertMitigationVoxility($self->{config}->{mitigation}->{voxility});
         }
 
