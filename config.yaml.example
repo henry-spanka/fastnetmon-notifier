@@ -127,8 +127,8 @@ annotation:
     enable: true
     host: monitoring01
     port: 9200
-    path: fastnetmon/ddos_attacks/
     ban:
+        path: fastnetmon/ddos_attacks/
         title: "$DIRECTION network incident detected for IP $IP with $PPS pps"
         description: |
                     =======OVERVIEW=======
@@ -149,6 +149,7 @@ annotation:
                     =======TASK LOG=======
                     $TASKLOG
     unban:
+        path: fastnetmon_unban/ddos_attacks/
         title: "$DIRECTION network incident for IP $IP with $PPS pps deleted"
         description: |
                     =======OVERVIEW=======

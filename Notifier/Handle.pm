@@ -154,7 +154,9 @@ sub createAnnotation {
 
     my $ua = LWP::UserAgent->new;
 
-    my $server_endpoint = "http://$aconfig->{host}:$aconfig->{port}/$aconfig->{path}";
+    my $path = $aconfig->{$action}->{path};
+
+    my $server_endpoint = "http://$aconfig->{host}:$aconfig->{port}/${path}";
     
     my $req = HTTP::Request->new(POST => $server_endpoint);
 
