@@ -28,4 +28,6 @@ Notifier::Helper::checkParams($params);
 
 my $handler = Notifier::Handle->new($params, $config, $path);
 
+$handler->addTask("Booting up...");
+
 $handler->handle();

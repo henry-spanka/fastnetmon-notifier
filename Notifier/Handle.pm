@@ -30,11 +30,14 @@ sub handle {
     return if ($self->{params}->{action} eq 'attack_details'); # Not supported
 
     if ($self->{params}->{action} eq 'ban') {
-        $self->addTask("Received incident report");
+        $self->addTask("Received network incident report");
 
         if ($self->{config}->{mitigation}->{voxility}->{enable} && $self->{params}->{direction} eq 'incoming') {
             $self->mitigateVoxility($self->{config}->{mitigation}->{voxility});
         }
+
+        $self->addTask("Finalyzing...");
+        $self->addTask("All tasks completed - Dispatching Notifications");
 
         if ($self->{config}->{annotation}->{enable} && $self->{params}->{action}) {
             $self->createAnnotation($self->{config}->{annotation});
@@ -49,11 +52,14 @@ sub handle {
         }
 
     } else {
-        $self->addTask("Received unblock request");
+        $self->addTask("Received request to disable mitigation measures");
 
         if ($self->{config}->{mitigation}->{voxility}->{enable} && $self->{params}->{direction} eq 'incoming') {
             $self->revertMitigationVoxility($self->{config}->{mitigation}->{voxility});
         }
+
+        $self->addTask("Finalyzing...");
+        $self->addTask("All tasks completed - Dispatching Notifications");
 
         if ($self->{config}->{annotation}->{enable} && $self->{params}->{action}) {
             $self->createAnnotation($self->{config}->{annotation});
@@ -193,6 +199,10 @@ sub mitigateVoxility {
 
     my $server_endpoint = "https://$vconfig->{host}/$vconfig->{path}";
 
+    $self->addTask("Voxility mitigation enabled - Mitigating...");
+
+    $self->addTask('Retrieving Voxility IP list');
+
     $response = $ua->get($server_endpoint);
 
     if (!$response->is_success) {
@@ -202,17 +212,24 @@ sub mitigateVoxility {
 
     my $status = Notifier::Helper::parseVoxilityList($response->content, $ip_address);
 
+    $self->addTask("Saving old Protection state to cache file");
+
     Notifier::Helper::writeOldVoxilityStatus($ip_address, $status->{protected}, $self->{path});
 
     if ($status->{status} eq 1) {
         if ($status->{protected} eq 1) {
-            $self->addTask("IP is in always on mode - Nothing to do");
+            $self->addTask("Awesome! - IP is already in always on mode - Therefore we have nothing to do");
         } else {
-            $self->addTask("Protection triggered itself - Nothing to do")
+            $self->addTask("Great! - Voxility's Sensor already detected the attack - Nothing to do");
         }
     } else {
+        if ($status->{status} eq 2) {
+            $self->addTask("Protection is in Sensor-Mode and Voxility did not detected the attack");
+        } else {
+            $self->addTask("Protection is disabled - Re-enabling it to mitigate");
+        }
 
-        $self->addTask("Enabling Protection");
+        $self->addTask("Enabling Voxility Protection");
 
         my $post_data = {
             'mode' => "1;$status->{layer7}",
@@ -228,19 +245,22 @@ sub mitigateVoxility {
             return;
         }
 
+        $self->addTask("Confirming, that the Voxility's DDoS protection is really enabled");
+
         $response = $ua->get($server_endpoint);
 
         if (!$response->is_success) {
-            $self->addTask('Error while trying to confirm that Protection is enabled');
+            $self->addTask('Error while trying to confirm that the Protection is enabled');
             return;
         }
 
         $status = Notifier::Helper::parseVoxilityList($response->content, $ip_address);
 
         if ($status->{protected} == 1) {
-            $self->addTask('Successfully enabled DDoS Protection');
+            $self->addTask('Awesome! - Protection is now enabled');
+            $self->addTask('Attack mitigated successfully');
         } else {
-            $self->addTask('Failed to enable DDDoS Protection');
+            $self->addTask('Could not enable the DDoS Protection - Please check manually');
         }
 
     }
@@ -259,12 +279,18 @@ sub revertMitigationVoxility {
 
     my $server_endpoint = "https://$vconfig->{host}/$vconfig->{path}";
 
+    $self->addTask("Voxility mitigation enabled - Unblocking...");
+
+    $self->addTask("Retrieving cached old Protection state");
+
     my $oldstatus = Notifier::Helper::getOldVoxilityStatus($ip_address, $self->{path});
 
     if (!$oldstatus->{exists}) {
-        $self->addTask("Protection is in old state - Nothing to do");
+        $self->addTask("No cached file found - Please check manually");
         return;
     }
+
+    $self->addTask('Retrieving Voxility IP list');
 
     $response = $ua->get($server_endpoint);
 
@@ -276,11 +302,11 @@ sub revertMitigationVoxility {
     my $status = Notifier::Helper::parseVoxilityList($response->content, $ip_address);
 
     if ($status->{protected} eq $oldstatus->{status}) {
-        $self->addTask("Protection is in old state - Nothing to do");
+        $self->addTask("Great! - Protection is already in old state - Nothing to do");
         return;    
     }
 
-    $self->addTask("Setting back protection status to default");
+    $self->addTask("Changing Protection status back to old state ($oldstatus->{status})");
 
     my $post_data = {
         'mode' => "$oldstatus->{status};$status->{layer7}",
@@ -292,9 +318,11 @@ sub revertMitigationVoxility {
     $response = $ua->post($server_endpoint, $post_data);
 
     if (!$response->is_success) {
-        $self->addTask('Error while enabling DDoS Protection');
+        $self->addTask('Error while disabling DDoS Protection');
         return;
     }
+
+    $self->addTask("Confirming, that Voxility's DDoS protection is really disabled");
 
     $response = $ua->get($server_endpoint);
 
@@ -306,10 +334,13 @@ sub revertMitigationVoxility {
     $status = Notifier::Helper::parseVoxilityList($response->content, $ip_address);
 
     if ($status->{protected} == $oldstatus->{status}) {
-        $self->addTask("Successfully changed protection back to old state ($oldstatus->{status})");
+        $self->addTask("Great! - Successfully changed protection back to old state ($oldstatus->{status})");
+        $self->addTask("Mitigation measures disabled successfully");
     } else {
         $self->addTask("Error while trying to change protection back to old state ($oldstatus->{status})");
     }
+
+    $self->addTask("Deleting cached protection status");
 
     Notifier::Helper::deleteOldVoxilityStatus($ip_address, $self->{path});
 
