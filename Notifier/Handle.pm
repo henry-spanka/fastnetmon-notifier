@@ -203,7 +203,7 @@ sub mitigateVoxility {
     Notifier::Helper::writeOldVoxilityStatus($ip_address, $status->{protected}, $self->{path});
 
     if ($status->{status} eq 1) {
-        if ($status->{protected}) {
+        if ($status->{protected} eq 1) {
             $self->addTask("IP is in always on mode - Nothing to do");
         } else {
             $self->addTask("Protection triggered itself - Nothing to do")
