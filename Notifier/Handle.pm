@@ -306,7 +306,7 @@ sub revertMitigationVoxility {
         return;    
     }
 
-    $self->addTask("Changing Protection status back to old state ($oldstatus->{status})");
+    $self->addTask("Changing Protection state back to old state ($oldstatus->{status})");
 
     my $post_data = {
         'mode' => "$oldstatus->{status};$status->{layer7}",

@@ -10,7 +10,7 @@ notify:
             body: |
                 Dear Network Administrator,
                 an $DIRECTION network attack just took place and we are informing you, because you are responsible
-                for this network any your network could be affected. Please check and mitigate.
+                for this network and your network could be affected. Please check and mitigate.
                 
                 Below you will find further information regarding the incident including a mitigation log
                 and packet captures.
