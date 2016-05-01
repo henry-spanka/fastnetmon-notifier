@@ -43,6 +43,10 @@ sub handle {
             $self->createAnnotation($self->{config}->{annotation});
         }
 
+        if ($self->{config}->{notify}->{slack}->{enable}) {
+            $self->sendSlackMessage($self->{config}->{notify}->{slack});
+        }
+
         if ($self->{config}->{notify}->{email}->{enable}) {
             $self->dispatchEmail($self->{config}->{notify}->{email});
         }
@@ -63,6 +67,10 @@ sub handle {
 
         if ($self->{config}->{annotation}->{enable} && $self->{params}->{action}) {
             $self->createAnnotation($self->{config}->{annotation});
+        }
+
+        if ($self->{config}->{notify}->{slack}->{enable}) {
+            $self->sendSlackMessage($self->{config}->{notify}->{slack});
         }
 
         if ($self->{config}->{notify}->{email}->{enable}) {
@@ -113,6 +121,54 @@ sub dispatchEmail {
         sendmail($message);
 
     }
+}
+
+sub sendSlackMessage {
+    my $self = shift;
+    my $slackconfig = shift;
+
+    my $action = $self->{params}->{action};
+    my $params = $self->{params};
+
+    my $subject = Notifier::Helper::parseSubject($slackconfig->{$action}->{subject}, $params);
+
+    my $body = Notifier::Helper::parseBody($slackconfig->{$action}->{body}, $params, $self->getTasksAsString(), $self->{details});
+
+    my $ua = LWP::UserAgent->new;
+
+    my $date = `date +%Y%m%d`;
+    chomp($date);
+
+    my $post_data = {
+        'token' => $slackconfig->{token},
+        'text' => $subject,
+        'attachments' => encode_json([
+            {
+                'color' => '#36a64f',
+                'text' => Notifier::Helper::parseBody($slackconfig->{$action}->{attachment}, $params, $self->getTasksAsString(), $self->{details})
+            }
+        ]),
+        'channel' => $slackconfig->{channel},
+        'username' => $slackconfig->{username},
+        'as_user' => 'false'
+    };
+
+    $ua->post("https://slack.com/api/chat.postMessage", $post_data);
+
+    if ($slackconfig->{upload_report}) {
+        my $post_data = {
+            'token' => $slackconfig->{token},
+            'content' => $body,
+            'filetype' => 'text',
+            'filename' => "$params->{ip_address}_$params->{direction}_$params->{action}_${date}.txt",
+            'channels' => $slackconfig->{channel},
+            'username' => $slackconfig->{username},
+            'as_user' => 'false'
+        };
+
+        $ua->post("https://slack.com/api/files.upload", $post_data);
+    }
+
 }
 
 sub dispatchBoxcar {

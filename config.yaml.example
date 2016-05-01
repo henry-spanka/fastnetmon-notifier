@@ -11,32 +11,32 @@ notify:
                 Dear Network Administrator,
                 an $DIRECTION network attack just took place and we are informing you, because you are responsible
                 for this network and your network could be affected. Please check and mitigate.
-                
+
                 Below you will find further information regarding the incident including a mitigation log
                 and packet captures.
-                
+
                 =======OVERVIEW=======
                 IP: $IP
                 Direction: $DIRECTION
                 Initial attack power: $Initial_attack_power
-                
+
                 Attack type: $Attack_type
                 Attack protocol: $Attack_protocol
-                
+
                 Total incoming_traffic: $Total_incoming_traffic
                 Total outgoing_traffic: $Total_outgoing_traffic
                 Total incoming_pps: $Total_incoming_pps
                 Total outgoing_pps: $Total_outgoing_pps
                 Total incoming_flows: $Total_incoming_flows
                 Total outgoing_flows: $Total_outgoing_flows
-                
+
                 =======TASK LOG=======
                 $TASKLOG
-                
-                
+
+
                 =======FULL LOG=======
                 $RAW_DATA
-                
+
                 Best regards,
                 Network Monitoring System
 
@@ -47,32 +47,32 @@ notify:
                 the mitigation rules for the $DIRECTION network attack were just deleted, because the system requested
                 an unblock of IP $IP. Please note, that there may be some cases where the attack is still not mitigated
                 or not being detected.
-                
+
                 Below you will find further information regarding the incident including a removal log from the blocklist
                 and packet captures.
-                
+
                 =======OVERVIEW=======
                 IP: $IP
                 Direction: $DIRECTION
                 Initial attack power: $Initial_attack_power
-                
+
                 Attack type: $Attack_type
                 Attack protocol: $Attack_protocol
-                
+
                 Total incoming_traffic: $Total_incoming_traffic
                 Total outgoing_traffic: $Total_outgoing_traffic
                 Total incoming_pps: $Total_incoming_pps
                 Total outgoing_pps: $Total_outgoing_pps
                 Total incoming_flows: $Total_incoming_flows
                 Total outgoing_flows: $Total_outgoing_flows
-                
+
                 =======TASK LOG=======
                 $TASKLOG
-                
-                
+
+
                 =======FULL LOG=======
                 $RAW_DATA
-                
+
                 Best regards,
                 Network Monitoring System
 
@@ -89,17 +89,17 @@ notify:
                     IP: $IP
                     Direction: $DIRECTION
                     Initial attack power: $Initial_attack_power
-                    
+
                     Attack type: $Attack_type
                     Attack protocol: $Attack_protocol
-                    
+
                     Total incoming_traffic: $Total_incoming_traffic
                     Total outgoing_traffic: $Total_outgoing_traffic
                     Total incoming_pps: $Total_incoming_pps
                     Total outgoing_pps: $Total_outgoing_pps
                     Total incoming_flows: $Total_incoming_flows
                     Total outgoing_flows: $Total_outgoing_flows
-                    
+
                     =======TASK LOG=======
                     $TASKLOG
         unban:
@@ -109,19 +109,96 @@ notify:
                     IP: $IP
                     Direction: $DIRECTION
                     Initial attack power: $Initial_attack_power
-                    
+
                     Attack type: $Attack_type
                     Attack protocol: $Attack_protocol
-                    
+
                     Total incoming_traffic: $Total_incoming_traffic
                     Total outgoing_traffic: $Total_outgoing_traffic
                     Total incoming_pps: $Total_incoming_pps
                     Total outgoing_pps: $Total_outgoing_pps
                     Total incoming_flows: $Total_incoming_flows
                     Total outgoing_flows: $Total_outgoing_flows
-                    
+
                     =======TASK LOG=======
                     $TASKLOG
+
+    slack:
+        enable: true
+        token: YOURTOKEN
+        channel: YOURCHANNEL
+        username: YOURUSERNAME
+        upload_report: true
+        ban:
+            subject: "New $DIRECTION DDoS detected for IP $IP with $PPS pps"
+            attachment: |
+                =======OVERVIEW=======
+                IP: $IP
+                Direction: $DIRECTION
+                Initial attack power: $Initial_attack_power
+
+                Attack type: $Attack_type
+                Attack protocol: $Attack_protocol
+
+                =======TASK LOG=======
+                $TASKLOG
+            body: |
+                =======OVERVIEW=======
+                IP: $IP
+                Direction: $DIRECTION
+                Initial attack power: $Initial_attack_power
+
+                Attack type: $Attack_type
+                Attack protocol: $Attack_protocol
+
+                Total incoming_traffic: $Total_incoming_traffic
+                Total outgoing_traffic: $Total_outgoing_traffic
+                Total incoming_pps: $Total_incoming_pps
+                Total outgoing_pps: $Total_outgoing_pps
+                Total incoming_flows: $Total_incoming_flows
+                Total outgoing_flows: $Total_outgoing_flows
+
+                =======TASK LOG=======
+                $TASKLOG
+
+
+                =======FULL LOG=======
+                $RAW_DATA
+        unban:
+            subject: "DDoS for IP $IP ended with $PPS pps"
+            attachment: |
+                =======OVERVIEW=======
+                IP: $IP
+                Direction: $DIRECTION
+                Initial attack power: $Initial_attack_power
+
+                Attack type: $Attack_type
+                Attack protocol: $Attack_protocol
+
+                =======TASK LOG=======
+                $TASKLOG
+            body: |
+                =======OVERVIEW=======
+                IP: $IP
+                Direction: $DIRECTION
+                Initial attack power: $Initial_attack_power
+
+                Attack type: $Attack_type
+                Attack protocol: $Attack_protocol
+
+                Total incoming_traffic: $Total_incoming_traffic
+                Total outgoing_traffic: $Total_outgoing_traffic
+                Total incoming_pps: $Total_incoming_pps
+                Total outgoing_pps: $Total_outgoing_pps
+                Total incoming_flows: $Total_incoming_flows
+                Total outgoing_flows: $Total_outgoing_flows
+
+                =======TASK LOG=======
+                $TASKLOG
+
+
+                =======FULL LOG=======
+                $RAW_DATA
 
 annotation:
     enable: true
@@ -135,17 +212,17 @@ annotation:
                     IP: $IP
                     Direction: $DIRECTION
                     Initial attack power: $Initial_attack_power
-                    
+
                     Attack type: $Attack_type
                     Attack protocol: $Attack_protocol
-                    
+
                     Total incoming_traffic: $Total_incoming_traffic
                     Total outgoing_traffic: $Total_outgoing_traffic
                     Total incoming_pps: $Total_incoming_pps
                     Total outgoing_pps: $Total_outgoing_pps
                     Total incoming_flows: $Total_incoming_flows
                     Total outgoing_flows: $Total_outgoing_flows
-                    
+
                     =======TASK LOG=======
                     $TASKLOG
     unban:
@@ -156,17 +233,17 @@ annotation:
                     IP: $IP
                     Direction: $DIRECTION
                     Initial attack power: $Initial_attack_power
-                    
+
                     Attack type: $Attack_type
                     Attack protocol: $Attack_protocol
-                    
+
                     Total incoming_traffic: $Total_incoming_traffic
                     Total outgoing_traffic: $Total_outgoing_traffic
                     Total incoming_pps: $Total_incoming_pps
                     Total outgoing_pps: $Total_outgoing_pps
                     Total incoming_flows: $Total_incoming_flows
                     Total outgoing_flows: $Total_outgoing_flows
-                    
+
                     =======TASK LOG=======
                     $TASKLOG
 
