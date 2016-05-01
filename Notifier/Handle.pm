@@ -10,6 +10,8 @@ use LWP::UserAgent;
 
 use JSON;
 
+use Data::Dumper; # Debugging
+
 sub new {
     my ($class, $params, $config, $path) = @_;
 
@@ -219,7 +221,7 @@ sub createAnnotation {
     my $path = $aconfig->{$action}->{path};
 
     my $server_endpoint = "http://$aconfig->{host}:$aconfig->{port}/${path}";
-    
+
     my $req = HTTP::Request->new(POST => $server_endpoint);
 
     $req->header('content-type' => 'application/json');
@@ -253,20 +255,28 @@ sub mitigateVoxility {
 
     my $ua = LWP::UserAgent->new;
 
-    my $server_endpoint = "https://$vconfig->{host}/$vconfig->{path}";
+    my $server_endpoint = "https://$vconfig->{host}/$vconfig->{endpoint}";
+    $server_endpoint .= "?username=$vconfig->{username}&password=$vconfig->{password}";
 
     $self->addTask("Voxility mitigation enabled - Mitigating...");
 
     $self->addTask('Retrieving Voxility IP list');
 
-    $response = $ua->get($server_endpoint);
+    $response = $ua->get($server_endpoint."&action=list");
 
     if (!$response->is_success) {
         $self->addTask('Error while trying to get Voxility IP list');
         return;
     }
 
-    my $status = Notifier::Helper::parseVoxilityList($response->content, $ip_address);
+    my $object = decode_json(Notifier::Helper::trim($response->content));
+
+    if (ref($object) ne 'HASH' || !%$object) {
+        $self->addTask('Error while parsing Voxility IP List');
+        return;
+    }
+
+    my $status = Notifier::Helper::parseVoxilityList($ip_address, $object);
 
     $self->addTask("Saving old Protection state to cache file");
 
@@ -287,30 +297,32 @@ sub mitigateVoxility {
 
         $self->addTask("Enabling Voxility Protection");
 
-        my $post_data = {
-            'mode' => "1;$status->{layer7}",
-            'ip' => "${ip_address}/32",
-            'passwordVOX' => $vconfig->{password},
-            'submit' => "Save changes"
-        };
+        my $layer7_negated = $status->{layer7} ? 0 : 1; # negate Layer 7
 
-        $response = $ua->post($server_endpoint, $post_data);
+        $response = $ua->get($server_endpoint."&ip=${ip_address}&mode=1&no_l7=${layer7_negated}");
 
-        if (!$response->is_success) {
+        if (!$response->is_success || Notifier::Helper::trim($response->content) ne 'OK') {
             $self->addTask('Error while enabling DDoS Protection');
             return;
         }
 
         $self->addTask("Confirming, that the Voxility's DDoS protection is really enabled");
 
-        $response = $ua->get($server_endpoint);
+        $response = $ua->get($server_endpoint."&action=list");
 
         if (!$response->is_success) {
             $self->addTask('Error while trying to confirm that the Protection is enabled');
             return;
         }
 
-        $status = Notifier::Helper::parseVoxilityList($response->content, $ip_address);
+        $object = decode_json(Notifier::Helper::trim($response->content));
+
+        if (ref($object) ne 'HASH' || !%$object) {
+            $self->addTask('Error while parsing Voxility IP List');
+            return;
+        }
+
+        $status = Notifier::Helper::parseVoxilityList($ip_address, $object);
 
         if ($status->{protected} == 1) {
             $self->addTask('Awesome! - Protection is now enabled');
@@ -333,7 +345,8 @@ sub revertMitigationVoxility {
 
     my $ua = LWP::UserAgent->new;
 
-    my $server_endpoint = "https://$vconfig->{host}/$vconfig->{path}";
+    my $server_endpoint = "https://$vconfig->{host}/$vconfig->{endpoint}";
+    $server_endpoint .= "?username=$vconfig->{username}&password=$vconfig->{password}";;
 
     $self->addTask("Voxility mitigation enabled - Unblocking...");
 
@@ -348,46 +361,55 @@ sub revertMitigationVoxility {
 
     $self->addTask('Retrieving Voxility IP list');
 
-    $response = $ua->get($server_endpoint);
+    $response = $ua->get($server_endpoint."&action=list");
 
     if (!$response->is_success) {
         $self->addTask('Error while trying to get Voxility IP list');
         return;
     }
 
-    my $status = Notifier::Helper::parseVoxilityList($response->content, $ip_address);
+    my $object = decode_json(Notifier::Helper::trim($response->content));
+
+    if (ref($object) ne 'HASH' || !%$object) {
+        $self->addTask('Error while parsing Voxility IP List');
+        return;
+    }
+
+    my $status = Notifier::Helper::parseVoxilityList($ip_address, $object);
 
     if ($status->{protected} eq $oldstatus->{status}) {
         $self->addTask("Great! - Protection is already in old state - Nothing to do");
-        return;    
+        return;
     }
 
     $self->addTask("Changing Protection state back to old state ($oldstatus->{status})");
 
-    my $post_data = {
-        'mode' => "$oldstatus->{status};$status->{layer7}",
-        'ip' => "${ip_address}/32",
-        'passwordVOX' => $vconfig->{password},
-        'submit' => "Save changes"
-    };
+    my $layer7_negated = $status->{layer7} ? 0 : 1; # negate Layer 7
 
-    $response = $ua->post($server_endpoint, $post_data);
+    $response = $ua->get($server_endpoint."&ip=${ip_address}&mode=$oldstatus->{status}&no_l7=${layer7_negated}");
 
-    if (!$response->is_success) {
+    if (!$response->is_success || Notifier::Helper::trim($response->content) ne 'OK') {
         $self->addTask('Error while disabling DDoS Protection');
         return;
     }
 
     $self->addTask("Confirming, that Voxility's DDoS protection is really disabled");
 
-    $response = $ua->get($server_endpoint);
+    $response = $ua->get($server_endpoint."&action=list");
 
     if (!$response->is_success) {
         $self->addTask('Error while trying to get Voxility IP list');
         return;
     }
 
-    $status = Notifier::Helper::parseVoxilityList($response->content, $ip_address);
+    $object = decode_json(Notifier::Helper::trim($response->content));
+
+    if (ref($object) ne 'HASH' || !%$object) {
+        $self->addTask('Error while parsing Voxility IP List');
+        return;
+    }
+
+    $status = Notifier::Helper::parseVoxilityList($ip_address, $object);
 
     if ($status->{protected} == $oldstatus->{status}) {
         $self->addTask("Great! - Successfully changed protection back to old state ($oldstatus->{status})");

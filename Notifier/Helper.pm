@@ -7,6 +7,10 @@ use Data::Validate::IP qw(is_ipv4);
 use YAML::XS 'LoadFile';
 use POSIX qw(strftime);
 
+use JSON;
+
+use Data::Dumper; # Debugging
+
 
 my $FASTNETMON_PARAMS = {
     'Attack_type' => 1,
@@ -155,14 +159,15 @@ sub parseFastNetMonData {
 }
 
 sub parseVoxilityList {
-    my $raw = shift;
     my $ip = shift;
+    my $object = shift;
 
-    if ($raw =~ /<td>${ip}\/32<\/td><td><font color=[A-Za-z0-9_.]+>[A-Za-z0-9_.]+\s\((\d)\)<\/font><\/td><td>(\d)<\/td><td><font color=[A-Za-z0-9_.]+>[A-Za-z0-9_.]+\s\((\d)\)<\/font>/) {
-        return { protected => $1, status => $2, layer7 => $3};
+    if (defined($object->{$ip}) && $object->{$ip}) {
+        my $ipobject = $object->{$ip};
+        return { protected => $ipobject->{mode}, status => $ipobject->{stat}, layer7 => $ipobject->{no_l7} ? 0 : 1}; # negate Layer 7
     }
 
-    return { protected => 2, status => 2, layer7 => 0};
+    return { protected => 2, status => 2, layer7 => 1};
 }
 
 sub getOldVoxilityStatus {
@@ -200,6 +205,14 @@ sub deleteOldVoxilityStatus {
     my $path = shift;
 
     unlink "${path}/cache/${ip}.cache";
+}
+
+sub trim {
+    my $data = shift;
+
+    $data =~ s/^\s+|\s+$//g if $data;
+
+    return $data;
 }
 
 1;

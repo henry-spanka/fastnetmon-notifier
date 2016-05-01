@@ -250,6 +250,7 @@ annotation:
 mitigation:
     voxility:
         enable: true
-        host: wcp.weesly.de
-        path: voxility/index2.php
+        host: api.active-servers.com
+        endpoint: call
+        username: YOURUSERNAME
         password: YOURPASSWORD
