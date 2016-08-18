@@ -34,7 +34,7 @@ sub handle {
     if ($self->{params}->{action} eq 'ban') {
         $self->addTask("Received network incident report");
 
-        if ($self->{config}->{mitigation}->{voxility}->{enable} && $self->{params}->{direction} eq 'incoming') {
+        if ($self->{config}->{mitigation}->{voxility}->{enable}) {
             $self->mitigateVoxility($self->{config}->{mitigation}->{voxility});
         }
 
