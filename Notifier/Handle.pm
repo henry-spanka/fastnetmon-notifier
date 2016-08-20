@@ -64,7 +64,7 @@ sub handle {
     } else {
         $self->addTask("Received request to disable mitigation measures");
 
-        if ($self->{config}->{mitigation}->{voxility}->{enable} && $self->{params}->{direction} eq 'incoming') {
+        if ($self->{config}->{mitigation}->{voxility}->{enable}) {
             $self->revertMitigationVoxility($self->{config}->{mitigation}->{voxility});
         }
 
