@@ -57,6 +57,10 @@ sub handle {
             $self->dispatchBoxcar($self->{config}->{notify}->{boxcar});
         }
 
+        if ($self->{config}->{notify}->{whmcs}->{enable}) {
+            $self->sendWHMCSMessage($self->{config}->{notify}->{whmcs});
+        }
+
     } else {
         $self->addTask("Received request to disable mitigation measures");
 
@@ -81,6 +85,10 @@ sub handle {
 
         if ($self->{config}->{notify}->{boxcar}->{enable}) {
             $self->dispatchBoxcar($self->{config}->{notify}->{boxcar});
+        }
+
+        if ($self->{config}->{notify}->{whmcs}->{enable}) {
+            $self->sendWHMCSMessage($self->{config}->{notify}->{whmcs});
         }
     }
 
@@ -171,6 +179,33 @@ sub sendSlackMessage {
         $ua->post("https://slack.com/api/files.upload", $post_data);
     }
 
+}
+
+sub sendWHMCSMessage {
+    my $self = shift;
+    my $whmcsconfig = shift;
+
+    my $action = $self->{params}->{action};
+    my $params = $self->{params};
+    my $details = $self->{details}->{data};
+
+    my $body = Notifier::Helper::parseBody($whmcsconfig->{$action}->{body}, $params, $self->getTasksAsString(), $self->{details});
+
+    my $ua = LWP::UserAgent->new;
+
+    my $post_data = {
+        'token' => $whmcsconfig->{token},
+        'ip' => $params->{ip_address},
+        'direction' => $params->{direction},
+        'attack_power' => $details->{Initial_attack_power},
+        'attack_type' => $details->{Attack_type},
+        'attack_protocol' => $details->{Attack_protocol},
+        'tasklog' => $self->getTasksAsString(),
+        'attack_details' => $body,
+        'action' => $action
+    };
+
+    $ua->post($whmcsconfig->{url}, $post_data);
 }
 
 sub dispatchBoxcar {

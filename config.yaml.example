@@ -1,4 +1,55 @@
 notify:
+    whmcs:
+        enable: false
+        url: "Path to some PHP script"
+        token: "TOKEN"
+        ban:
+            body: |
+                =======OVERVIEW=======
+                IP: $IP
+                Direction: $DIRECTION
+                Initial attack power: $Initial_attack_power
+
+                Attack type: $Attack_type
+                Attack protocol: $Attack_protocol
+
+                Total incoming_traffic: $Total_incoming_traffic
+                Total outgoing_traffic: $Total_outgoing_traffic
+                Total incoming_pps: $Total_incoming_pps
+                Total outgoing_pps: $Total_outgoing_pps
+                Total incoming_flows: $Total_incoming_flows
+                Total outgoing_flows: $Total_outgoing_flows
+
+                =======TASK LOG=======
+                $TASKLOG
+
+
+                =======FULL LOG=======
+                $RAW_DATA
+        unban:
+            body: |
+                =======OVERVIEW=======
+                IP: $IP
+                Direction: $DIRECTION
+                Initial attack power: $Initial_attack_power
+
+                Attack type: $Attack_type
+                Attack protocol: $Attack_protocol
+
+                Total incoming_traffic: $Total_incoming_traffic
+                Total outgoing_traffic: $Total_outgoing_traffic
+                Total incoming_pps: $Total_incoming_pps
+                Total outgoing_pps: $Total_outgoing_pps
+                Total incoming_flows: $Total_incoming_flows
+                Total outgoing_flows: $Total_outgoing_flows
+
+                =======TASK LOG=======
+                $TASKLOG
+
+
+                =======FULL LOG=======
+                $RAW_DATA
+
     email:
         enable: true
         from: "Network Monitoring System <network-monitoring-system@myvirtualserver.de>"
