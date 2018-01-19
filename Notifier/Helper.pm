@@ -162,12 +162,15 @@ sub parseVoxilityList {
     my $ip = shift;
     my $object = shift;
 
-    if (defined($object->{$ip}) && $object->{$ip}) {
-        my $ipobject = $object->{$ip};
-        return { protected => $ipobject->{mode}, status => $ipobject->{stat}, layer7 => $ipobject->{no_l7} ? 0 : 1}; # negate Layer 7
+    if (defined($object->{success}) && $object->{success}) {
+        my $list = $object->{data}->{iplist};
+        if (defined($list->{$ip}) && $list->{$ip}) {
+            my $ipobject = $list->{$ip};
+            return { protected => $ipobject->{mode}, status => $ipobject->{stat}, layer7 => $ipobject->{no_l7} ? 0 : 1, layer7_ssl => $ipobject->{no_ssl_l7} ? 0 : 1}; # negate Layer 7
+        }
     }
 
-    return { protected => 2, status => 2, layer7 => 1};
+    return { protected => 2, status => 2, layer7 => 1, layer7_ssl => 1};
 }
 
 sub getOldVoxilityStatus {
@@ -181,8 +184,8 @@ sub getOldVoxilityStatus {
     open (VFILE, $filename);
     while (<VFILE>) {
         chomp;
-        if ($_ =~ /^OLDSTATUS:(\d)$/) {
-            return { exists => 1, status => $1 };
+        if ($_ =~ /^OLDSTATUS:\((\d)\|(\d)\|(\d)\)$/) {
+            return { exists => 1, status => $1, l7 => $2, l7_ssl => $3 };
         }
     }
     close (VFILE);
@@ -191,12 +194,14 @@ sub getOldVoxilityStatus {
 sub writeOldVoxilityStatus {
     my $ip = shift;
     my $status = shift;
+    my $l7 = shift;
+    my $l7_ssl = shift;
     my $path = shift;
 
     my $filename = "${path}/cache/${ip}.cache";
 
     open (VFILE, ">${filename}");
-    print VFILE "OLDSTATUS:${status}";
+    print VFILE "OLDSTATUS:(${status}|${l7}|${l7_ssl})";
     close (VFILE);
 }
 

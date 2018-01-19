@@ -299,7 +299,7 @@ sub mitigateVoxility {
 
     $response = $ua->get($server_endpoint."&action=list");
 
-    if (!$response->is_success) {
+    if (!$response->is_success || !decode_json(Notifier::Helper::trim($response->content))->{success}) {
         $self->addTask('Error while trying to get Voxility IP list');
         return;
     }
@@ -315,7 +315,7 @@ sub mitigateVoxility {
 
     $self->addTask("Saving old Protection state to cache file");
 
-    Notifier::Helper::writeOldVoxilityStatus($ip_address, $status->{protected}, $self->{path});
+    Notifier::Helper::writeOldVoxilityStatus($ip_address, $status->{protected}, $status->{layer7}, $status->{layer7_ssl}, $self->{path});
 
     if ($status->{status} eq 1) {
         if ($status->{protected} eq 1) {
@@ -333,10 +333,11 @@ sub mitigateVoxility {
         $self->addTask("Enabling Voxility Protection");
 
         my $layer7_negated = $status->{layer7} ? 0 : 1; # negate Layer 7
+        my $layer7_ssl_negated = $status->{layer7_ssl} ? 0 : 1; # Negeate Layer 7 ssl
 
-        $response = $ua->get($server_endpoint."&ip=${ip_address}&mode=1&no_l7=${layer7_negated}");
+        $response = $ua->get($server_endpoint."&action=modify&ip=${ip_address}&mode=1&no_l7=${layer7_negated}&no_ssl_l7=${layer7_ssl_negated}");
 
-        if (!$response->is_success || Notifier::Helper::trim($response->content) ne 'OK') {
+        if (!$response->is_success || !decode_json(Notifier::Helper::trim($response->content))->{success}) {
             $self->addTask('Error while enabling DDoS Protection');
             return;
         }
@@ -345,7 +346,7 @@ sub mitigateVoxility {
 
         $response = $ua->get($server_endpoint."&action=list");
 
-        if (!$response->is_success) {
+        if (!$response->is_success || !decode_json(Notifier::Helper::trim($response->content))->{success}) {
             $self->addTask('Error while trying to confirm that the Protection is enabled');
             return;
         }
@@ -398,7 +399,7 @@ sub revertMitigationVoxility {
 
     $response = $ua->get($server_endpoint."&action=list");
 
-    if (!$response->is_success) {
+    if (!$response->is_success || !decode_json(Notifier::Helper::trim($response->content))->{success}) {
         $self->addTask('Error while trying to get Voxility IP list');
         return;
     }
@@ -420,10 +421,11 @@ sub revertMitigationVoxility {
     $self->addTask("Changing Protection state back to old state ($oldstatus->{status})");
 
     my $layer7_negated = $status->{layer7} ? 0 : 1; # negate Layer 7
+    my $layer7_ssl_negated = $status->{layer7_ssl} ? 0 : 1; # Negeate Layer 7 ssl
 
-    $response = $ua->get($server_endpoint."&ip=${ip_address}&mode=$oldstatus->{status}&no_l7=${layer7_negated}");
+    $response = $ua->get($server_endpoint."&action=modify&ip=${ip_address}&mode=$oldstatus->{status}&no_l7=${layer7_negated}&no_ssl_l7=${layer7_ssl_negated}");
 
-    if (!$response->is_success || Notifier::Helper::trim($response->content) ne 'OK') {
+    if (!$response->is_success || !decode_json(Notifier::Helper::trim($response->content))->{success}) {
         $self->addTask('Error while disabling DDoS Protection');
         return;
     }
@@ -432,7 +434,7 @@ sub revertMitigationVoxility {
 
     $response = $ua->get($server_endpoint."&action=list");
 
-    if (!$response->is_success) {
+    if (!$response->is_success || !decode_json(Notifier::Helper::trim($response->content))->{success}) {
         $self->addTask('Error while trying to get Voxility IP list');
         return;
     }
